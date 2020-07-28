@@ -72,26 +72,30 @@ playerscore = 0 #날짜까지 담은 플레이어 기록
 rank=[] #기록을 저장하는 리스트
 justone = False # 사망시 딱한번 실행하기 위한 변수
 
-# 실행동안(종료버튼 누르기 전까지)
+#상태 변수
 running = True
-playing =False
+playing = False
+countdown = False
+sdh = 0 #셋둘하나
+# 실행동안(종료버튼 누르기 전까지)
 while running:
 
     dt = clock.tick(FPS)
-
+    #게임중 키 입력
     for event in pygame.event.get():
         # 종료버튼 누르면,
         if event.type == pygame.QUIT:
             running = False
 
         #초기화면일 때,
-        if not playing:
+        if not playing and not countdown:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    playing = True
+                if event.key == pygame.K_SPACE: #스페이스바를 누르면,
+                    countdown = True#카운트다운 시작
 
             #살아있을 때 플레이어 조작
         elif player.hp >0:
+            # 키를 누르면,
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     player.goto(-1, 0)
@@ -116,10 +120,20 @@ while running:
     bg.update_and_draw(dt, screen, player)
     #초기화면
     if not playing:
-        draw_text('Avoding Bullets', 80, (width / 2 - 300, height / 2 - 200), (255, 255, 255))
-        draw_text('press \'Spacebar\' to start', 30, (width / 2 - 200, height / 2+200), (255, 255, 255))
+        if not countdown:
+            draw_text('Avoding Bullets', 80, (width / 2 - 300, height / 2 - 200), (255, 255, 255))
+            draw_text('press \'Spacebar\' to start', 30, (width / 2 - 200, height / 2+200), (255, 255, 255))
 
-    #스페이스바를 눌러 게임시작 후
+        #스페이스바를 누르면 카운트다운
+        else:
+            sdh+=dt #
+            txt = '{}'.format(3- sdh//1000)
+            draw_text(txt, 150, (width / 2 -50, height / 2 -50), (255, 255, 255))
+
+            if sdh > 3000: #3초가 지나면,
+                playing = True
+                countdown = False
+    #카운트다운 끝나면 게임 시작
     else:
         # 충돌 이펙트 (불꽃과 피해량표시)
         if pg.ct > 0: #pg.ct가 활성화 돼있을때,
