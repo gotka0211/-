@@ -74,6 +74,7 @@ justone = False # 사망시 딱한번 실행하기 위한 변수
 
 # 실행동안(종료버튼 누르기 전까지)
 running = True
+playing =False
 while running:
 
     dt = clock.tick(FPS)
@@ -83,8 +84,14 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        #초기화면일 때,
+        if not playing:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    playing = True
+
             #살아있을 때 플레이어 조작
-        if  player.hp >0:
+        elif player.hp >0:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     player.goto(-1, 0)
@@ -107,110 +114,117 @@ while running:
 
     # 화면 채우기
     bg.update_and_draw(dt, screen, player)
-    # 충돌 이펙트 (불꽃과 피해량표시)
-    if pg.ct > 0: #pg.ct가 활성화 돼있을때,
-        pg.update_and_draw(dt, screen, player)
-        draw_text(str(phr), 30, (player.pos[0] + rnd.randint(-30, -10),
-                                 player.pos[1] + rnd.randint(-70, -60)), (255, 0, 0))  # 난수는 역동감을 위해섭니다 ㅎㅎ
-    # 총알 업데이트
-    for b in bullets:  # bullets는 bullet.py에서 불러온 리스트입니다.
-        b.update_and_draw(dt, screen)
-    # 플레이어 업데이트
-    player.update(dt, screen)
-    player.draw(screen)
+    #초기화면
+    if not playing:
+        draw_text('Avoding Bullets', 80, (width / 2 - 300, height / 2 - 200), (255, 255, 255))
+        draw_text('press \'Spacebar\' to start', 30, (width / 2 - 200, height / 2+200), (255, 255, 255))
 
-    #플레이어가 살아있을때,
-    if player.hp>0:
-        # 총알 생성
-        time_for_adding_bullets += dt
-        if time_for_adding_bullets > 2000: #총알을 2초에 한번씩 생성합니다.
-            bbb = rnd.randint(1, 20) #어떤 총알을 새롭게 생성할지 랜덤으로 정하는 변수 bbb = bullet bbobgi (교수님의 커피추첨에서 영감을 얻었습니다.ㅎㅎ)
-            if bbb <= 4: #20 %
-                big(0, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
-            elif bbb >= 16: #20%
-                ypos = rnd.random() * height  #랜덤으로 뽑아낸 총알 생성위치와 총알 속도를 고정시켜,
-                xto, yto = rnd.random() - 0.5, rnd.random() - 0.5
-                for i in range (5):  #연달아 일직선으로 향하는 '점사'라는 총알을 생성합니다.
-                    jumsa(0+xto*i*40, ypos+yto*i*40, xto, yto)
-            elif bbb <= 8: #20%
-                blackhole(rnd.random() * width, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
-            else: # 40%
-                Normal(0, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
-            time_for_adding_bullets -= 2000
-
-        # 충돌 감지
-        for b in bullets:
-            if collision(player, b) and not player.mujuck: #플레이어가 무적이 아닐때 충돌이면,
-                pygame.mixer.Sound.play(pigyuck) #맞는 소리
-                player.hp -= b.damage #체력 감소
-                phr = b.damage #피해량 표시 (pihaeryang)
-                screen.fill((255, 0, 0)) #빨간화면 (타격감 ㅎㅎ)
-                pg.ct = 200 #충돌이펙트 지속시간
-                player.mct = b.mctt #플레이어 무적시간 부여 , 총알의 종류마다 플레이어의 무적시간이 다릅니다.
-
-        # 무적 활성화
-        if player.mct>0:
-            player.mujuck = True
-        else: # 시간이 지나면 무적이 꺼짐.
-            player.mujuck = False
-
-        # 상태창
-        pygame.draw.rect(screen, (0, 0, 0), (0, 0, width, 40))
-        pygame.draw.line(screen, (255, 255, 255), (0, 40), (width, 40), 2)
-        # 피격시 줄어든 체력 강조
-        if pg.ct > 0:
-            pygame.draw.line(screen, (255, 0, 0), (400, 20), (900 - (100 - player.hp) * 5 + phr * 5, 20), 25)
-        if player.hp <0: player.hp = 0  #hp가 0이하가 돼 RGB값 설정에 생길 수 있는 문제를 막아줍니다.
-        #체력에 따라 게이지의 색상이 달라집니다.
-        pygame.draw.line(screen, (int(255 * (100 - player.hp) / 100), int(255 * (player.hp) / 100), 0), (400, 20),
-                         (900 - (100 - player.hp) * 5, 20), 25)
-        # 남은 체력 표시
-        hptxt = 'HP : {}'.format(player.hp)
-        draw_text(hptxt, 15, (910, 10), (255, 255, 255))
-        # score
-        score = time.time() - start_time
-        txt = 'SCORE: {:.2f}  Bullets: {}'.format(score, len(bullets))
-        draw_text(txt, 25, (10, 10), (255, 255, 255))
-
-    # 체력이 0이하면,
+    #스페이스바를 눌러 게임시작 후
     else:
-        #  딱 한번 점수 저장 (날짜, 점수)
-        if justone == False:
-            playerscore = str(datetime.today())[:19] + ',' + str(score)
-            print(playerscore)
-            rank_save(playerscore, rank)
-            #터지는 소리도 딱한번
-            pygame.mixer.Sound.play(pung)
-            justone = True
-        # 사망후 객체들 이동 중지
-        player.to = [0, 0]
-        bg.to = [0, 0]
-        for b in bullets:
-            b.to = [0,0]
+        # 충돌 이펙트 (불꽃과 피해량표시)
+        if pg.ct > 0: #pg.ct가 활성화 돼있을때,
+            pg.update_and_draw(dt, screen, player)
+            draw_text(str(phr), 30, (player.pos[0] + rnd.randint(-30, -10),
+                                     player.pos[1] + rnd.randint(-70, -60)), (255, 0, 0))  # 난수는 역동감을 위해섭니다 ㅎㅎ
+        # 총알 업데이트
+        for b in bullets:  # bullets는 bullet.py에서 불러온 리스트입니다.
+            b.update_and_draw(dt, screen)
+        # 플레이어 업데이트
+        player.update(dt, screen)
+        player.draw(screen)
 
-        #게임오버 메세지와 현재 기록 출력
-        draw_text('GAME OVER', 80, (width / 2 - 270, height / 2 - 200), (255, 255, 255))
-        txt = 'SCORE: {:.3f} / Bullets: {}'.format(score, len(bullets))
-        draw_text(txt, 30, (width / 2 - 220, height / 2 - 100), (255, 255, 255))
-        # 기록 출력 인터페이스
-        draw_text('---------------| RANK |---------------',25,(width /2 -200,height /2-50),(255,255,0))
-        draw_text('NO.  SCORE.                  DATE.', 15, (width / 2 - 200, height / 2 - 20), (150, 150, 0))
-        # 저장된 기록들 정렬
-        rank = sorted(rank, key=lambda x: float(x[1]), reverse=True)[:10]
-        # 저장된 기록들 출력
-        for i in range(len(rank)):
-            r_txt = ' {0}.  {1:.3f} ({2})'.format(i+1,float(rank[i][1]),rank[i][0])
-            # 현재 점수가 등수안에 있는지 확인
-            if rank[i][0]+','+rank[i][1] == playerscore: #있으면 하이라이트,
-                highlight =(255,255,0)
-                draw_text('YOUR SCORE -->', 12, (width / 2 - 300, height / 2 +4+ 25 * i), highlight)
-            else :
-                highlight = (255,255,255) #없으면 기본 색(흰색)
-            # 가독성을 위한 검은 막대기 추가
-            pygame.draw.line(screen, (0, 0, 0), (int(width / 2 - 200), int(height / 2 +10+ 25 * i)),
-                             (int(width / 2 + 150), int(height / 2 +10+ 25 * i)), 20)
-            # 그위에 등수/점수/날짜 출력
-            draw_text(r_txt,20,(width /2 -200,height /2 +25*i),highlight)
+        #플레이어가 살아있을때,
+        if player.hp>0:
+            # 총알 생성
+            time_for_adding_bullets += dt
+            if time_for_adding_bullets > 2000: #총알을 2초에 한번씩 생성합니다.
+                bbb = rnd.randint(1, 20) #어떤 총알을 새롭게 생성할지 랜덤으로 정하는 변수 bbb = bullet bbobgi (교수님의 커피추첨에서 영감을 얻었습니다.ㅎㅎ)
+                if bbb <= 4: #20 %
+                    big(0, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
+                elif bbb >= 16: #20%
+                    ypos = rnd.random() * height  #랜덤으로 뽑아낸 총알 생성위치와 총알 속도를 고정시켜,
+                    xto, yto = rnd.random() - 0.5, rnd.random() - 0.5
+                    for i in range (5):  #연달아 일직선으로 향하는 '점사'라는 총알을 생성합니다.
+                        jumsa(0+xto*i*40, ypos+yto*i*40, xto, yto)
+                elif bbb <= 8: #20%
+                    blackhole(rnd.random() * width, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
+                else: # 40%
+                    Normal(0, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
+                time_for_adding_bullets -= 2000
+
+            # 충돌 감지
+            for b in bullets:
+                if collision(player, b) and not player.mujuck: #플레이어가 무적이 아닐때 충돌이면,
+                    pygame.mixer.Sound.play(pigyuck) #맞는 소리
+                    player.hp -= b.damage #체력 감소
+                    phr = b.damage #피해량 표시 (pihaeryang)
+                    screen.fill((255, 0, 0)) #빨간화면 (타격감 ㅎㅎ)
+                    pg.ct = 200 #충돌이펙트 지속시간
+                    player.mct = b.mctt #플레이어 무적시간 부여 , 총알의 종류마다 플레이어의 무적시간이 다릅니다.
+
+            # 무적 활성화
+            if player.mct>0:
+                player.mujuck = True
+            else: # 시간이 지나면 무적이 꺼짐.
+                player.mujuck = False
+
+            # 상태창
+            pygame.draw.rect(screen, (0, 0, 0), (0, 0, width, 40))
+            pygame.draw.line(screen, (255, 255, 255), (0, 40), (width, 40), 2)
+            # 피격시 줄어든 체력 강조
+            if pg.ct > 0:
+                pygame.draw.line(screen, (255, 0, 0), (400, 20), (900 - (100 - player.hp) * 5 + phr * 5, 20), 25)
+            if player.hp <0: player.hp = 0  #hp가 0이하가 돼 RGB값 설정에 생길 수 있는 문제를 막아줍니다.
+            #체력에 따라 게이지의 색상이 달라집니다.
+            pygame.draw.line(screen, (int(255 * (100 - player.hp) / 100), int(255 * (player.hp) / 100), 0), (400, 20),
+                             (900 - (100 - player.hp) * 5, 20), 25)
+            # 남은 체력 표시
+            hptxt = 'HP : {}'.format(player.hp)
+            draw_text(hptxt, 15, (910, 10), (255, 255, 255))
+            # score
+            score = time.time() - start_time
+            txt = 'SCORE: {:.2f}  Bullets: {}'.format(score, len(bullets))
+            draw_text(txt, 25, (10, 10), (255, 255, 255))
+
+        # 체력이 0이하면,
+        else:
+            #  딱 한번 점수 저장 (날짜, 점수)
+            if justone == False:
+                playerscore = str(datetime.today())[:19] + ',' + str(score)
+                print(playerscore)
+                rank_save(playerscore, rank)
+                #터지는 소리도 딱한번
+                pygame.mixer.Sound.play(pung)
+                justone = True
+            # 사망후 객체들 이동 중지
+            player.to = [0, 0]
+            bg.to = [0, 0]
+            for b in bullets:
+                b.to = [0,0]
+
+            #게임오버 메세지와 현재 기록 출력
+            draw_text('GAME OVER', 80, (width / 2 - 270, height / 2 - 200), (255, 255, 255))
+            txt = 'SCORE: {:.3f} / Bullets: {}'.format(score, len(bullets))
+            draw_text(txt, 30, (width / 2 - 220, height / 2 - 100), (255, 255, 255))
+            # 기록 출력 인터페이스
+            draw_text('---------------| RANK |---------------',25,(width /2 -200,height /2-50),(255,255,0))
+            draw_text('NO.  SCORE.                  DATE.', 15, (width / 2 - 200, height / 2 - 20), (150, 150, 0))
+            # 저장된 기록들 정렬
+            rank = sorted(rank, key=lambda x: float(x[1]), reverse=True)[:10]
+            # 저장된 기록들 출력
+            for i in range(len(rank)):
+                r_txt = ' {0}.  {1:.3f} ({2})'.format(i+1,float(rank[i][1]),rank[i][0])
+                # 현재 점수가 등수안에 있는지 확인
+                if rank[i][0]+','+rank[i][1] == playerscore: #있으면 하이라이트,
+                    highlight =(255,255,0)
+                    draw_text('YOUR SCORE -->', 12, (width / 2 - 300, height / 2 +4+ 25 * i), highlight)
+                else :
+                    highlight = (255,255,255) #없으면 기본 색(흰색)
+                # 가독성을 위한 검은 막대기 추가
+                pygame.draw.line(screen, (0, 0, 0), (int(width / 2 - 200), int(height / 2 +10+ 25 * i)),
+                                 (int(width / 2 + 150), int(height / 2 +10+ 25 * i)), 20)
+                # 그위에 등수/점수/날짜 출력
+                draw_text(r_txt,20,(width /2 -200,height /2 +25*i),highlight)
 
     # 화면 갱신
     pygame.display.update()
