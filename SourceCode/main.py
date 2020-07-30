@@ -37,7 +37,7 @@ def rank_save(playerscore,rank):
 #재시작시 변수 초기화 함수
 def initialization():
     player.pos = [width / 2, height / 2]
-    player.to = [0,0]
+    #player.goto(0,0)
     player.angle = 0
     player.hp = 100
     bullets.clear()
@@ -97,9 +97,9 @@ while running:
             running = False
 
         #살아있을 때 플레이어 조작
-        if player.hp >0 :
+        if player.hp >0 or countdown:
             # 키를 누르면,
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN :
                 if event.key == pygame.K_LEFT:
                     player.goto(-1, 0)
                 elif event.key == pygame.K_RIGHT:
