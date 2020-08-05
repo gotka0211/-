@@ -1,5 +1,7 @@
 import pygame
 
+playerbullets=[] #플레이어 총알
+
 class Player:
     def __init__(self, x, y):
         #현재 이미지
@@ -20,7 +22,7 @@ class Player:
         self.to = [0, 0]  # 방향
         self.angle = 0  #각도
         #
-        self.hp = 100  # 체력
+        self.hp = 0  # 체력
         self.mujuck = False #피격시 무적상태 돌입
         self.bbjj = 0  # 무적시 반짝거림 딜레이 (bbanjjack)
         self.mct = 0    #무적지속시간(mujcuk continuing time)
@@ -91,6 +93,43 @@ class Player:
         calib_pos = (self.pos[0] - rotated.get_width() / 2, self.pos[1] - rotated.get_height() / 2)  # 정 중앙에 위치시키기 위함
         screen.blit(rotated, calib_pos)  # 객체 그리기
 
+#플레이어 총알
+class Pb:
+    def __init__(self):
+        self.pos = Player.pos
+        #총알방향
+        if Player.angle == 0:
+            self.to = [0,-1]
+        elif Player.angle == 45:
+            self.to = [1,-1]
+        elif Player.angle == 90:
+            self.to = [1,0]
+        elif Player.angle == 135:
+            self.to = [1,1]
+        elif Player.angle == 180:
+            self.to = [0,1]
+        elif Player.angle == -135:
+            self.to = [-1,1]
+        elif Player.angle == -90:
+            self.to = [-1,0]
+        elif Player.angle == -45:
+            self.to = [-1,-1]
+
+        self.radius = 10
+        self.speed = 1
+        self.color = (0,255,0)
+        playerbullets.append(self)
+
+    def update_and_draw(self, dt, screen):
+        width, height = screen.get_size()
+        self.pos[0] = (self.pos[0] + dt * self.to[0] * self.speed)
+        self.pos[1] = (self.pos[1] + dt * self.to[1] * self.speed)
+        pos_int = (int(self.pos[0]), int(self.pos[1]))
+        pygame.draw.circle(screen, self.color, pos_int, self.radius)
+        if (self.pos[0] //width > 1) or (self.pos[1] //height)> 1:
+            del self
+
+
 #충돌 이펙트
 class Pg:#pg = pigyuck(피격)
     def __init__(self,x,y):
@@ -121,3 +160,8 @@ class Bg:
         self.pos[1] = min(max(self.pos[1],-700), 0 )
 
         screen.blit(self.image, self.pos)
+
+
+
+
+
