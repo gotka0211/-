@@ -5,6 +5,7 @@ from bullet import *
 import math
 import time
 from datetime import datetime
+import copy
 
 #충돌감지 함수
 def collision(obj1, obj2):
@@ -41,6 +42,7 @@ def initialization():
     player.angle = 0
     player.hp = 100
     bullets.clear()
+    playerbullets.clear()
     for i in range(10):  # 게임 시작 시 총알 기본으로 생성
         Normal(0, rnd.random() * height, rnd.random() - 0.5, rnd.random() - 0.5)
     global start_time # 게임 시작시 시간
@@ -97,7 +99,7 @@ while running:
             running = False
 
         #살아있을 때 플레이어 조작
-        if player.hp >0 or countdown:
+        if player.hp >0 or countdown :
             # 키를 누르면,
             if event.type == pygame.KEYDOWN :
                 if event.key == pygame.K_LEFT:
@@ -108,8 +110,13 @@ while running:
                     player.goto(0, -1)
                 elif event.key == pygame.K_DOWN:
                     player.goto(0, 1)
+                #총알 발사
+                if event.key == pygame.K_SPACE:
+                    Pb(player)
+                    print(len(playerbullets))
+
             # 키를 떼면,
-            if event.type == pygame.KEYUP :
+            elif event.type == pygame.KEYUP :
                 if event.key == pygame.K_LEFT:
                     player.goto(1, 0)
                 elif event.key == pygame.K_RIGHT:
@@ -119,10 +126,10 @@ while running:
                 elif event.key == pygame.K_DOWN:
                     player.goto(0, -1)
 
-        #죽었을때 스페이스바를 누르면
-        elif player.hp <=0 :
+        #죽었을때 혹은 게임이 시작이 안된 상태에서 스페이스바를 누르면
+        elif player.hp <=0  :
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r: #r키를 누르면,
+                if event.key == pygame.K_r : #r키를 누르면,
                     playing = True
                     countdown = True #게임재시작
 
@@ -156,6 +163,9 @@ while running:
                                          player.pos[1] + rnd.randint(-70, -60)), (255, 0, 0))  # 난수는 역동감을 위해섭니다 ㅎㅎ
             # 총알 업데이트
             for b in bullets:  # bullets는 bullet.py에서 불러온 리스트입니다.
+                b.update_and_draw(dt, screen)
+            #플레이어 총알 업데이트
+            for b in playerbullets:
                 b.update_and_draw(dt, screen)
             # 플레이어 업데이트
             player.update(dt, screen)
