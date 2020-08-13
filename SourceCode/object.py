@@ -1,4 +1,5 @@
 import pygame
+import copy
 
 playerbullets=[] #플레이어 총알
 
@@ -95,25 +96,26 @@ class Player:
 
 #플레이어 총알
 class Pb:
-    def __init__(self):
-        self.pos = Player.pos
+    def __init__(self,player):
+        self.pos = copy.deepcopy(player.pos)
+        self.to=[0,0]
         #총알방향
-        if Player.angle == 0:
+        if player.angle == 0:
             self.to = [0,-1]
-        elif Player.angle == 45:
-            self.to = [1,-1]
-        elif Player.angle == 90:
-            self.to = [1,0]
-        elif Player.angle == 135:
-            self.to = [1,1]
-        elif Player.angle == 180:
-            self.to = [0,1]
-        elif Player.angle == -135:
-            self.to = [-1,1]
-        elif Player.angle == -90:
-            self.to = [-1,0]
-        elif Player.angle == -45:
+        elif player.angle == 45:
             self.to = [-1,-1]
+        elif player.angle == 90:
+            self.to = [-1,0]
+        elif player.angle == 135:
+            self.to = [-1,1]
+        elif player.angle == 180:
+            self.to = [0,1]
+        elif player.angle == -135:
+            self.to = [1,1]
+        elif player.angle == -90:
+            self.to = [1,0]
+        elif player.angle == -45:
+            self.to = [1,-1]
 
         self.radius = 10
         self.speed = 1
@@ -126,8 +128,8 @@ class Pb:
         self.pos[1] = (self.pos[1] + dt * self.to[1] * self.speed)
         pos_int = (int(self.pos[0]), int(self.pos[1]))
         pygame.draw.circle(screen, self.color, pos_int, self.radius)
-        if (self.pos[0] //width > 1) or (self.pos[1] //height)> 1:
-            del self
+        if not (( 0<=(self.pos[0] /width)<=1) and (0<=(self.pos[1] /height)<= 1)):
+            del playerbullets[0]
 
 
 #충돌 이펙트
